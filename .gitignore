@@ -1,0 +1,26 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python files
+*.pyc
+__pycache__/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Database dumps
+*.sql
+
+# Node.js dependencies (if you have a frontend folder)
+node_modules/
+
+# Static files
+staticfiles/
+
+# Ignore system files
+.DS_Store
+Temp
