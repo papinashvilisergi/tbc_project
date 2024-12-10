@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: collabdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: JordiSnake
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  django_backend:
+    build:
+      context: ./django_backend
+      dockerfile: django.dockerfile
+    container_name: django_backend
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    volumes:
+      - ./django_backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
+  react_frontend:
+    build:
+      context: ./react_frontend
+      dockerfile: react.dockerfile
+    container_name: react_frontend
+    environment:
+      - VITE_BACKEND_URL=http://django_backend:8000
+    volumes:
+      - ./react_frontend:/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - django_backend
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
