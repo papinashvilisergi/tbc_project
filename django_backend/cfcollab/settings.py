@@ -1,3 +1,5 @@
+# from decouple import config   #by seRgi
+from dotenv import load_dotenv #by seRgi
 import os
 from datetime import timedelta
 from pathlib import Path
