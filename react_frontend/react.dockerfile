@@ -1,26 +1,22 @@
-# Use Node.js 16 as base image (since Vite requires Node.js 16)
-FROM node:16
+# Stage 1: Build the React application
+FROM node:20 AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json first to leverage Docker cache
-COPY ./package*.json /app/
+COPY package*.json ./
 
-# Install dependencies and add structured-clone polyfill
-RUN npm cache clean --force && rm -rf node_modules && npm install
+RUN npm cache clean --force
+RUN npm install -g npm@latest
+RUN npm install
+RUN npm install -g vite@4.x
 
-# Ensure 'structured-clone' polyfill is installed
-#RUN npm install structured-clone
+COPY . .
 
-# Ensure the 'src' directory exists and create an index.js file if not present
-RUN mkdir -p /app/src && echo "import 'structured-clone';" > /app/src/index.js
+RUN npm run build
 
-# Copy the rest of the React app into the container
-COPY ./ /app
+# Stage 2: Serve the production build using Nginx
+FROM nginx:latest
 
-# Expose the port that Vite uses
-EXPOSE 8080
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Set the default command to start the React development server
-CMD ["npm", "run", "dev", "--", "--port", "8080"]
+EXPOSE 80

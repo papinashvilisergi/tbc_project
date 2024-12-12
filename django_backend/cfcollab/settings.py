@@ -19,7 +19,11 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Allow requests from specific IP addresses, including 167.99.138.11
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '167.99.138.11']
+#ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '167.99.138.11']
+ALLOWED_HOSTS = ['sergidevops.com', 'www.sergidevops.com', '127.0.0.1', 'localhost']
+
+# Proxy SSL Header - Trust HTTPS forwarded requests by seRgi
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 INSTALLED_APPS = [
@@ -131,15 +135,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS configuration to allow access from specific IPs
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:8080",
-    "http://192.168.0.6:8080",
-    "http://10.64.150.153:8080",
-    "https://example-ios.com",
-    "http://167.99.138.11:80",
-    "http://167.99.138.11:3000",
-    "http://167.99.138.11:8080",  # Added this port for frontend
-    "http://167.99.138.11:8000",  # Added this port for backend
+    "https://sergidevops.com",
+    "http://sergidevops.com",
+    "http://localhost",
 ]
 
 # CORS configuration to allow all headers and credentials
@@ -163,7 +161,7 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),  # Set to 24 hours
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Set to 7 days
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),  # Set to 7 days
     'ROTATE_REFRESH_TOKENS': False,  # Optional: Refresh rotation behavior
     'BLACKLIST_AFTER_ROTATION': True,  # Optional: Blacklist behavior
     'ALGORITHM': 'HS256',  # Algorithm used for signing
