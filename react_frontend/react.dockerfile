@@ -1,4 +1,3 @@
-# Stage 1: Build the React application
 FROM node:20 AS builder
 
 WORKDIR /app
@@ -14,9 +13,6 @@ COPY . .
 
 RUN npm run build
 
-# Stage 2: Serve the production build using Nginx
 FROM nginx:latest
 
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-EXPOSE 80

@@ -1,34 +1,22 @@
 #!/bin/bash
 
-#stop and remove all existing containers
-docker-compose down -v
+# Stop and remove only the containers related to this project
+docker-compose down -v --remove-orphans
 
-# Stop and remove all containers
-docker stop $(docker ps -q)
-docker rm $(docker ps -aq)
-docker rmi $(docker images -q) --force
+# Remove images, containers, and volumes only for this project
+docker images | grep 'tbc_project' | awk '{print $3}' | xargs docker rmi -f
+docker ps -a | grep 'tbc_project' | awk '{print $1}' | xargs docker rm -f
+
+# Remove only named volumes related to this project
+docker volume rm tbc_project_postgres_data
 docker volume prune -f
-docker network prune -f
 
-# stop all containers
-docker stop $(docker ps -aq)
+# Remove unused Docker system files (optional but useful)
+docker system prune -a --volumes -f
 
-# remove all containers
-docker rm $(docker ps -aq)
+# Clear the React node_modules and cache
+sudo rm -rf /root/tbc_project/react_frontend/node_modules /root/tbc_project/react_frontend/package-lock.json
+npm cache clean --force
 
-# remove all images
-docker rmi $(docker images -q)
-
-# remove all volumes
-docker volume rm $(docker volume ls -q)
-
-# remove all networks
-docker network rm $(docker network ls -q)
-
-# remove evething(including containers, images, volumes and networks) that are not in use
-docker system prune -a --volumes
-
-# clearing the node_modules and package-lock.json
-sudo rm -rf /react_frontend/node_modules /react_frontend/package-lock.json
-
-npm cache clean --force && rm -rf node_modules && rm -rf /root/tbc_project/react_frontend/node_modules
+# Run the build script (do not call clean_build.sh again to avoid infinite loops)
+#./build.sh
