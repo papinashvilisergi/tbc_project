@@ -1,0 +1,80 @@
+name: Simple CI/CD
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the main branch
+  pull_request:
+    branches:
+      - main  # Trigger on pull requests to the main branch
+
+jobs:
+  build_and_deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: collabdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: JordiSnake
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Step 3: Build Docker Images and Start Services
+      - name: Build and Start Docker Compose
+        run: |
+          docker-compose down -v
+          docker-compose build --no-cache
+          docker-compose up -d
+
+      # Step 4: Run Tests
+      - name: Run Django Tests
+        run: |
+          docker-compose exec django_backend python manage.py test
+
+      # Step 5: Upload Build Artifacts (Optional, saves static files)
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: staticfiles
+          path: django_backend/staticfiles
+
+      # Step 6: Deploy to Remote Server via SSH
+      - name: Deploy to Server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+        run: |
+          # Create the SSH directory and add the private key
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+          # Pull and restart containers on the server
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /root/tbc_project
+            docker-compose down -v
+            git pull origin main
+            docker-compose build --no-cache
+            docker-compose up -d
+            docker system prune -f
+          EOF
